@@ -8,7 +8,8 @@
 
 - 冰雕柜格档位 `cold_cells`，字段为 `duty`（功能区）、`authorized`（点位已授权）、`free_slots`（余位）、`closed`（停止使用）。模型约束位于 `backend/domain/cold_cells_model.py`，规则位于 `cold_cells_service.py`。
 - 空载与冰雕实测 `thaw_samples`，字段为 `cell`（柜格）、`mass_kg`（冰灯质量 kg）、`melt`（接缝偏移 mm）、`drift`（相邻窗温漂）、`empty_test`（空载测试）、`piece`（冰雕码）。模型约束位于 `backend/domain/thaw_samples_model.py`，规则位于 `thaw_samples_service.py`。
-- 融缝稠密程度 `seam_maps`，字段为 `sample`（冰雕实测）、`density`（局部相对密度）、`threshold`（基线门槛）、`decision`（人工复核指向）、`token`（计算凭据）。模型约束位于 `backend/domain/seam_maps_model.py`，规则位于 `seam_maps_service.py`。
+- 融缝稠密程度 `seam_maps`，字段为 `sample`（冰雕实测）、`density`（局部相对密度）、`threshold`（基线门槛）、`decision`（人工复核指向）、`token`（计算凭据）、`version`（本单评分版本）。模型约束位于 `backend/domain/seam_maps_model.py`，规则位于 `seam_maps_service.py`。
+- 评分版本 `seam_versions`，字段为 `neighbors`（近邻数）、`state`（试算/现役/停用）。带载复检结论 `seam_rechecks`，字段为 `sample`（冰雕实测）、`verdict`（复检结论）。试算对照 `seam_trials`，字段为 `version`（试算版本）、`base_version`（对照现用版）、`samples`（对照样本数）、`miss_current`/`miss_trial`（现用/试算漏报）、`false_current`/`false_trial`（现用/试算误报）、`state`（待启用/已启用/已重算/已失效）。均位于 `backend/domain/seam_maps_model.py`。
 - 冰雕跨格互换单 `cell_swaps`，字段为 `seam`（融缝复核）、`target`（目标柜格）、`handover`（现场双签）、`state`（状态）。模型约束位于 `backend/domain/cell_swaps_model.py`，规则位于 `cell_swaps_service.py`。
 
 团队为模拟的10 人冰雕节搭建组，管理流动冷柜内的待布景单位。
@@ -52,10 +53,12 @@ Compose 运行 Nginx、Python FastAPI、独立 Redis 消费进程、SQL 数据�
 |---|---|---|
 | 冰雕柜格档位 | `/cold_cells` /cold_cells/set-cell-state | `frontend/src/pages/cold_cells.js` |
 | 空载与冰雕实测 | `/thaw_samples` /thaw_samples/observe-seam | `frontend/src/pages/thaw_samples.js` |
-| 融缝稠密程度 | `/seam_maps` /seam_maps/score-seam，/seam_maps/record-seam | `frontend/src/pages/seam_maps.js` |
+| 融缝稠密程度 | `/seam_maps` /seam_maps/score-seam，/seam_maps/record-seam，/seam_maps/record-recheck，/seam_maps/draft-version，/seam_maps/run-trial，/seam_maps/record-trial，/seam_maps/enable-version | `frontend/src/pages/seam_maps.js` |
 | 冰雕跨格互换单 | `/cell_swaps` /cell_swaps/reserve-swap，/cell_swaps/confirm-swap | `frontend/src/pages/cell_swaps.js` |
 
 SQL 实体与约束在 `backend/domain` 下维护。前端使用原生 ES modules。核心算子为 KNN 密度反比。标准化后以四近邻平均距离的反比给出局部相对密度，按八条独立历史的 15% 分位设置比较阈值。
+
+现役评分版本的近邻数可调整：登记试算版本后，用同一批带复检结论的带载样本对照现用版与试算版；参加复检对照的冰雕一律不进参考池。试算版漏报不增加且误报减少，复核员才可启用。试算期间照常出单；启用时一次性切换新申请的评分版本，已排队的照原版算，按旧版做的试算不能盖掉刚启用的版本。融缝页面可查每单评分版本、各对照批次的漏报与误报。
 
 记录均为冰雕组的模拟交接数据，密度分用于排队复核。
 

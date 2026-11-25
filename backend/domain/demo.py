@@ -1,6 +1,6 @@
 from domain.cold_cells_model import cold_cells
 from domain.thaw_samples_model import thaw_samples
-from domain.seam_maps_model import seam_maps
+from domain.seam_maps_model import seam_maps, seam_versions, seam_rechecks
 from domain.cell_swaps_model import cell_swaps
 
 FIXTURES = [
@@ -251,13 +251,31 @@ FIXTURES = [
   'melt': 0.9465202608836001,
   'drift': 0.7547756984906825,
   'empty_test': False,
-  'piece': 'ART-34'}]),
+  'piece': 'ART-34'},
+ {'code': 'ICE-R01',
+  'cell': 'CELL-A',
+  'mass_kg': 21.5,
+  'melt': 1.5,
+  'drift': 0.4,
+  'empty_test': False,
+  'piece': 'ART-R1'},
+ {'code': 'ICE-R02',
+  'cell': 'CELL-A',
+  'mass_kg': 15.0,
+  'melt': 1.6,
+  'drift': 0.8,
+  'empty_test': False,
+  'piece': 'ART-R2'}]),
+    (seam_versions, [{'code': 'KNN-K4', 'neighbors': 4, 'state': '现役'}]),
     (seam_maps, [{'code': 'DENS-0',
   'sample': 'ICE-S07',
   'density': 0.96,
   'threshold': 0.43,
   'decision': '同档可留',
-  'token': 'ice-seed'}]),
+  'token': 'ice-seed',
+  'version': 'KNN-K4'}]),
+    (seam_rechecks, [{'code': 'RCK-01', 'sample': 'ICE-R01', 'verdict': '无需换格'},
+ {'code': 'RCK-02', 'sample': 'ICE-R02', 'verdict': '确需换格'}]),
     (cell_swaps, [{'code': 'SWP-0',
   'seam': 'DENS-0',
   'target': 'CELL-B',
